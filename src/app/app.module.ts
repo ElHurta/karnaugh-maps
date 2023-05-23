@@ -11,6 +11,7 @@ import { TableModule } from 'primeng/table';
 import { DropdownModule } from 'primeng/dropdown';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ToggleButtonModule } from 'primeng/togglebutton';
+import { ButtonModule } from 'primeng/button';
 
 @NgModule({
   declarations: [
@@ -25,7 +26,8 @@ import { ToggleButtonModule } from 'primeng/togglebutton';
     TableModule,
     DropdownModule,
     BrowserAnimationsModule,
-    ToggleButtonModule
+    ToggleButtonModule,
+    ButtonModule
   ],
   providers: [],
   bootstrap: [AppComponent]
