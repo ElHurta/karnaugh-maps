@@ -10,6 +10,7 @@ export class TruthTableComponent {
 
   public variablesCount: number = 2;
   public variables: string[] = ['A', 'B'];
+
   public truthTable: TruthTable[] = []
   public truthTableCols: any = []
 
@@ -114,16 +115,45 @@ export class TruthTableComponent {
         });
       }
     }
-
-    console.log(this.karnaughMap, this.karnaughMapCols);
   }
 
   public onToggleResult(): void {
     this.updateKarnaugMap();
-    console.log(this.truthTable);
   }
 
   public updateKarnaugMap(): void {
-    
+   
+    let resultArray: number[] = this.truthTable.map((item: TruthTable) => item.result ? 1 : 0);
+
+    // Actulizar mapa de Karnaugh dependiendo de la cantidad de variables
+    if (this.variablesCount === 2) {
+      this.karnaughMap[0].firstCell = resultArray[0];
+      this.karnaughMap[0].secondCell = resultArray[1];
+      this.karnaughMap[1].firstCell = resultArray[2];
+      this.karnaughMap[1].secondCell = resultArray[3];
+    } else if (this.variablesCount === 3) {
+      this.karnaughMap[0].firstCell = resultArray[0];
+      this.karnaughMap[0].secondCell = resultArray[1];
+      this.karnaughMap[0].thirdCell = resultArray[3];
+      this.karnaughMap[0].fourthCell = resultArray[2];
+      this.karnaughMap[1].firstCell = resultArray[4];
+      this.karnaughMap[1].secondCell = resultArray[5];
+      this.karnaughMap[1].thirdCell = resultArray[7];
+      this.karnaughMap[1].fourthCell = resultArray[6];
+    }
+  }
+
+  public solveKarNaughMap(): void {
+    if (this.selectedSolutionMethod === 'Sum of Products (SOP)') {
+      this.solveKarNaughMapSOP();
+    } else if (this.selectedSolutionMethod === 'Product of Sums (POS)') {
+      this.solveKarNaughMapPOS();
+    }
+  }
+
+  public solveKarNaughMapSOP(): void {
+  }
+
+  public solveKarNaughMapPOS(): void {
   }
 }
