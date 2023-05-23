@@ -1,0 +1,65 @@
+<section class="m-5"> 
+    <div>
+        <h2>Mapas De Karnaugh</h2>
+        <h5 class="m-2 font-normal">JUAN DAVID HURTADO PEÑALOZA - 20191020082</h5>
+        <h5 class="m-2 font-normal">DANIELA CAROLINA BRITO PLANCHART - 20162020470</h5>
+        <h5 class="m-2 font-normal">ANGIE ALINA ESTEFANIA PEÑA BOLIVAR - 20181020146</h5>
+    </div>
+
+    <div class="m-5">
+        <div class="flex justify-content-evenly">
+            <div class="flex flex-column">
+                <label for="variables-count">Cantidad de Variables:</label>
+                <p-inputNumber
+                    type="number"
+                    [showButtons]="true"
+                    id="variables-count"
+                    name="variables-count"
+                    [min]="2"
+                    [max]="3"
+                    [(ngModel)]="variablesCount"
+                    (ngModelChange)="changeVariablesCount()"
+                />
+            </div>
+    
+            <div class="flex flex-column">
+                <label for="solution-method">Método de Solución:</label>
+                <p-dropdown
+                    id="solution-method"
+                    
+                    [options]="solutionMethods"
+                    [(ngModel)]="selectedSolutionMethod"
+                ></p-dropdown>
+            </div>
+        </div>
+    
+        <div class="mt-5">
+            <p-table [columns]="cols" [value]="truthTable">
+                <ng-template pTemplate="header" let-columns>
+                    <tr>
+                        <th *ngFor="let col of columns">
+                            {{ col.header }}
+                        </th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-value let-columns="columns">
+                    <tr>
+                        <td *ngFor="let col of columns; let i=index ">
+                            <p *ngIf="col.field != 'result'; else resultBlock">
+                                {{ value[col.field] }}
+                            </p>
+                            <ng-template #resultBlock>
+                                <p-toggleButton
+                                    onLabel="1"
+                                    offLabel="0"
+                                    [(ngModel)]="value[col.field]"
+                                    (ngModelChange)="onToggleResult()"
+                                />
+                            </ng-template>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </div>
+</section>
