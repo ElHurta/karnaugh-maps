@@ -27,14 +27,13 @@
                 <label for="solution-method">Método de Solución:</label>
                 <p-dropdown
                     id="solution-method"
-                    
                     [options]="solutionMethods"
                     [(ngModel)]="selectedSolutionMethod"
                 ></p-dropdown>
             </div>
 
             <div class="flex flex-column">
-                <button pButton pRipple label="Solucionar"></button>
+                <button pButton pRipple label="Solucionar" (click)="solveKarNaughMap()"></button>
             </div>
         </div>
     
@@ -81,8 +80,13 @@
                     </ng-template>
                     <ng-template let-value let-columns = "columns" pTemplate="body">
                         <tr>
-                            <td *ngFor="let col of karnaughMapCols">
-                                {{ value[col.field] }}
+                            <td class="karnaugh-column" *ngFor="let col of karnaughMapCols">
+                                <div
+                                    class="value-container"
+                                    [ngStyle]="value[col.field].currentPatterns"
+                                >
+                                    {{ value[col.field].currentValue }}
+                                </div>
                             </td>
                         </tr>
                     </ng-template>
