@@ -174,23 +174,25 @@ export class TruthTableComponent {
 
   public solveKarNaughMap(): void {
     this.cleanPatterns();
-    if (this.selectedSolutionMethod === 'Sum of Products (SOP)') {
-      this.solveKarNaughMapSOP();
-    } else if (this.selectedSolutionMethod === 'Product of Sums (POS)') {
-      this.solveKarNaughMapPOS();
-    }
+    this.solveKarNaughMapSOP(this.selectedSolutionMethod);
   }
 
-  public solveKarNaughMapSOP(): void {
-
+  public solveKarNaughMapSOP(solutionMethod : string): void {
+    console.log(solutionMethod);
+    let filledCell = 1
+    let emptyCell = 0
+    if(solutionMethod == "Product of Sums (POS)"){
+      filledCell = 0
+      emptyCell = 1
+    }
     let currentPatternIndex = 0;
     if(this.variablesCount==2){
       for(let i = 0; i < this.karnaughMap.length; i++){
-        if(this.karnaughMap[i].firstCell.currentValue==1){
+        if(this.karnaughMap[i].firstCell.currentValue==filledCell){
 
           this.karnaughMap[i].firstCell.currentPatterns.borderLeft = `3px solid ${this.patternsList[currentPatternIndex]}`;
           
-          if(this.karnaughMap[i].secondCell.currentValue==1){
+          if(this.karnaughMap[i].secondCell.currentValue==filledCell){
 
             // Conjunto Horizontal (Puede ser cualquier fila)
             this.karnaughMap[i].firstCell.currentPatterns.borderTop = `3px solid ${this.patternsList[currentPatternIndex]}`;
@@ -202,7 +204,7 @@ export class TruthTableComponent {
 
             if(i==1){
               // Completo (Dos horizontales, se remueven los bordes que los separan)
-              if(this.karnaughMap[i-1].firstCell.currentValue==1 && this.karnaughMap[i-1].secondCell.currentValue==1){
+              if(this.karnaughMap[i-1].firstCell.currentValue==filledCell && this.karnaughMap[i-1].secondCell.currentValue==filledCell){
                 this.karnaughMap[i-1].firstCell.currentPatterns.borderBottom = ``;
                 this.karnaughMap[i-1].secondCell.currentPatterns.borderBottom = ``;
   
@@ -211,7 +213,7 @@ export class TruthTableComponent {
                 break;
               } else{
                 // Dos Patrones: Horizontal Abajo, Primera Columna
-                if(this.karnaughMap[i-1].firstCell.currentValue==1){
+                if(this.karnaughMap[i-1].firstCell.currentValue==filledCell){
                   currentPatternIndex++;
                   this.karnaughMap[i-1].firstCell.currentPatterns.borderLeft = `3px solid ${this.patternsList[currentPatternIndex]}`;
                   this.karnaughMap[i-1].firstCell.currentPatterns.borderTop = `3px solid ${this.patternsList[currentPatternIndex]}`;
@@ -221,7 +223,7 @@ export class TruthTableComponent {
                 }
 
                 // Dos Patrones: Horizontal Abajo, Segunda Columna
-                if(this.karnaughMap[i-1].secondCell.currentValue==1){
+                if(this.karnaughMap[i-1].secondCell.currentValue==filledCell){
                   currentPatternIndex++;
                   this.karnaughMap[i-1].secondCell.currentPatterns.borderLeft = `3px solid ${this.patternsList[currentPatternIndex]}`;
                   this.karnaughMap[i-1].secondCell.currentPatterns.borderTop = `3px solid ${this.patternsList[currentPatternIndex]}`;
@@ -231,7 +233,7 @@ export class TruthTableComponent {
                 }
               }
             } else {
-              if(this.karnaughMap[i+1].firstCell.currentValue==1 && this.karnaughMap[i+1].secondCell.currentValue==0){
+              if(this.karnaughMap[i+1].firstCell.currentValue==filledCell && this.karnaughMap[i+1].secondCell.currentValue==emptyCell){
                 currentPatternIndex++;
                 // Dos Patrones: Horizontal arriba, primera columna
                 this.karnaughMap[i].firstCell.currentPatterns.borderRight = `3px solid ${this.patternsList[currentPatternIndex]}`;
@@ -239,7 +241,7 @@ export class TruthTableComponent {
                 this.karnaughMap[i+1].firstCell.currentPatterns.borderBottom = `3px solid ${this.patternsList[currentPatternIndex]}`;
                 this.karnaughMap[i+1].firstCell.currentPatterns.borderLeft = `3px solid ${this.patternsList[currentPatternIndex]}`;
                 break;
-              } else if(this.karnaughMap[i+1].firstCell.currentValue==0 && this.karnaughMap[i+1].secondCell.currentValue==1){
+              } else if(this.karnaughMap[i+1].firstCell.currentValue==emptyCell && this.karnaughMap[i+1].secondCell.currentValue==filledCell){
                 currentPatternIndex++;
                 // Dos Patrones: Horizontal arriba, segunda columna
                 this.karnaughMap[i+1].secondCell.currentPatterns.borderLeft = `3px solid ${this.patternsList[currentPatternIndex]}`;
@@ -250,7 +252,7 @@ export class TruthTableComponent {
               }
             }
           } else if(i==1){
-            if(this.karnaughMap[i-1].firstCell.currentValue==1){
+            if(this.karnaughMap[i-1].firstCell.currentValue==filledCell){
               // Conjunto Vertical Primera Columna
               this.karnaughMap[i-1].firstCell.currentPatterns.borderTop = `3px solid ${this.patternsList[currentPatternIndex]}`;
               this.karnaughMap[i-1].firstCell.currentPatterns.borderRight = `3px solid ${this.patternsList[currentPatternIndex]}`;
@@ -263,7 +265,7 @@ export class TruthTableComponent {
               this.karnaughMap[i].firstCell.currentPatterns.borderRight = `3px solid ${this.patternsList[currentPatternIndex]}`;
               this.karnaughMap[i].firstCell.currentPatterns.borderTop = `3px solid ${this.patternsList[currentPatternIndex]}`;
 
-              if(this.karnaughMap[i-1].secondCell.currentValue==1){
+              if(this.karnaughMap[i-1].secondCell.currentValue==filledCell){
                 // Dos patrones: Bloques solos Diagonal Abajo Izquierda Arriba Derecha
                 currentPatternIndex++;
                 this.karnaughMap[i-1].secondCell.currentPatterns.borderLeft = `3px solid ${this.patternsList[currentPatternIndex]}`;
@@ -274,13 +276,13 @@ export class TruthTableComponent {
               }
             }
           } else {
-            if(this.karnaughMap[i+1].firstCell.currentValue==0){
+            if(this.karnaughMap[i+1].firstCell.currentValue==emptyCell){
               // Bloque Solo Fila Arriba
               this.karnaughMap[i].firstCell.currentPatterns.borderTop = `3px solid ${this.patternsList[currentPatternIndex]}`;
               this.karnaughMap[i].firstCell.currentPatterns.borderRight = `3px solid ${this.patternsList[currentPatternIndex]}`;
               this.karnaughMap[i].firstCell.currentPatterns.borderBottom = `3px solid ${this.patternsList[currentPatternIndex]}`;
 
-              if(this.karnaughMap[i+1].secondCell.currentValue==1){
+              if(this.karnaughMap[i+1].secondCell.currentValue==filledCell){
                 // Dos patrones: Bloques solos Diagonal Arriba Izquierda Abajo Derecha
                 currentPatternIndex++;
                 this.karnaughMap[i+1].secondCell.currentPatterns.borderLeft = `3px solid ${this.patternsList[currentPatternIndex]}`;
@@ -291,11 +293,11 @@ export class TruthTableComponent {
               }
             }
           }
-        } else if (this.karnaughMap[i].secondCell.currentValue==1){
+        } else if (this.karnaughMap[i].secondCell.currentValue==filledCell){
           this.karnaughMap[i].secondCell.currentPatterns.borderRight = `3px solid ${this.patternsList[currentPatternIndex]}`;
 
           if(i==1){
-            if(this.karnaughMap[i-1].secondCell.currentValue==1){
+            if(this.karnaughMap[i-1].secondCell.currentValue==filledCell){
               // Conjunto Vertical Segunda Columna
               this.karnaughMap[i-1].secondCell.currentPatterns.borderTop = `3px solid ${this.patternsList[currentPatternIndex]}`;
               this.karnaughMap[i-1].secondCell.currentPatterns.borderLeft = `3px solid ${this.patternsList[currentPatternIndex]}`;
@@ -310,7 +312,7 @@ export class TruthTableComponent {
               this.karnaughMap[i].secondCell.currentPatterns.borderTop = `3px solid ${this.patternsList[currentPatternIndex]}`;
             }
           } else {
-            if(this.karnaughMap[i+1].secondCell.currentValue==0){
+            if(this.karnaughMap[i+1].secondCell.currentValue==emptyCell){
               // Bloque Solo Arriba Derecha
               this.karnaughMap[i].secondCell.currentPatterns.borderTop = `3px solid ${this.patternsList[currentPatternIndex]}`;
               this.karnaughMap[i].secondCell.currentPatterns.borderLeft = `3px solid ${this.patternsList[currentPatternIndex]}`;
