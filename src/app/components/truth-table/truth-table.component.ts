@@ -20,7 +20,12 @@ export class TruthTableComponent {
   public solutionMethods: string[] = ['Sum of Products (SOP)', 'Product of Sums (POS)'];
   public selectedSolutionMethod: string = 'Sum of Products (SOP)';
 
-  public patternsList = [
+  public solvedKarnaughArray: any[] = [];
+
+  public foundPatterns: any[] = [];
+  // Pattern example: { type: 'row', cells:[{cell}], state: 'open' }
+
+  public colorsList = [
     '#f54545',
     '#f5a845',
     '#f5f545',
@@ -174,157 +179,381 @@ export class TruthTableComponent {
 
   public solveKarNaughMap(): void {
     this.cleanPatterns();
-    this.solveKarNaughMapSOP(this.selectedSolutionMethod);
+
+    // Nuevo Método:
+    this.solverKarnaughMapAlgorithm(this.selectedSolutionMethod);
   }
 
-  public solveKarNaughMapSOP(solutionMethod : string): void {
-    console.log(solutionMethod);
-    let filledCell = 1
-    let emptyCell = 0
-    if(solutionMethod == "Product of Sums (POS)"){
-      filledCell = 0
-      emptyCell = 1
+ 
+  public solverKarnaughMapAlgorithm(solutionMethod: string): void {
+    let karnaughArray = this.transformKarnaughMapInto2DArray();
+    let currentPatternIndex = -1;
+    let filledCell = 1;
+
+    if (solutionMethod == 'Product of Sums (POS)') {
+      filledCell = 0;
     }
-    let currentPatternIndex = 0;
-    if(this.variablesCount==2){
-      for(let i = 0; i < this.karnaughMap.length; i++){
-        if(this.karnaughMap[i].firstCell.currentValue==filledCell){
+    console.log(filledCell);
+    this.foundPatterns = [];
 
-          this.karnaughMap[i].firstCell.currentPatterns.borderLeft = `3px solid ${this.patternsList[currentPatternIndex]}`;
-          
-          if(this.karnaughMap[i].secondCell.currentValue==filledCell){
+    this.karnaughRecursiveSolver(karnaughArray, filledCell, currentPatternIndex)
 
-            // Conjunto Horizontal (Puede ser cualquier fila)
-            this.karnaughMap[i].firstCell.currentPatterns.borderTop = `3px solid ${this.patternsList[currentPatternIndex]}`;
-            this.karnaughMap[i].firstCell.currentPatterns.borderBottom = `3px solid ${this.patternsList[currentPatternIndex]}`;
+    // Delete duplicated patterns
+    this.foundPatterns = this.foundPatterns.filter((pattern, index, self) =>
+      index === self.findIndex((t) => (
+        t.type === pattern.type && JSON.stringify(t.cells) === JSON.stringify(pattern.cells)
+      ))
+    )
 
-            this.karnaughMap[i].secondCell.currentPatterns.borderTop = `3px solid ${this.patternsList[currentPatternIndex]}`;
-            this.karnaughMap[i].secondCell.currentPatterns.borderRight = `3px solid ${this.patternsList[currentPatternIndex]}`;
-            this.karnaughMap[i].secondCell.currentPatterns.borderBottom = `3px solid ${this.patternsList[currentPatternIndex]}`;
+    // For each column type pattern found, find the adjacent cells and merge their patterns into one of type 'sqr'
+    let iterablePatterns = this.foundPatterns;
+    for (let i = 0; i < iterablePatterns.length; i++) {
+      if (iterablePatterns[i].type == 'column'){
 
-            if(i==1){
-              // Completo (Dos horizontales, se remueven los bordes que los separan)
-              if(this.karnaughMap[i-1].firstCell.currentValue==filledCell && this.karnaughMap[i-1].secondCell.currentValue==filledCell){
-                this.karnaughMap[i-1].firstCell.currentPatterns.borderBottom = ``;
-                this.karnaughMap[i-1].secondCell.currentPatterns.borderBottom = ``;
-  
-                this.karnaughMap[i].firstCell.currentPatterns.borderTop = ``;
-                this.karnaughMap[i].secondCell.currentPatterns.borderTop = ``;
-                break;
-              } else{
-                // Dos Patrones: Horizontal Abajo, Primera Columna
-                if(this.karnaughMap[i-1].firstCell.currentValue==filledCell){
-                  currentPatternIndex++;
-                  this.karnaughMap[i-1].firstCell.currentPatterns.borderLeft = `3px solid ${this.patternsList[currentPatternIndex]}`;
-                  this.karnaughMap[i-1].firstCell.currentPatterns.borderTop = `3px solid ${this.patternsList[currentPatternIndex]}`;
-                  this.karnaughMap[i-1].firstCell.currentPatterns.borderRight = `3px solid ${this.patternsList[currentPatternIndex]}`;
-                  this.karnaughMap[i].firstCell.currentPatterns.borderRight = `3px solid ${this.patternsList[currentPatternIndex]}`;
-                  break;
-                }
+        let nextIndex = i+1;
+        
+        if(this.foundPatterns[i].cells[0].row==karnaughArray.length-1 && this.variablesCount>2){
+          nextIndex = 0;
+        }
 
-                // Dos Patrones: Horizontal Abajo, Segunda Columna
-                if(this.karnaughMap[i-1].secondCell.currentValue==filledCell){
-                  currentPatternIndex++;
-                  this.karnaughMap[i-1].secondCell.currentPatterns.borderLeft = `3px solid ${this.patternsList[currentPatternIndex]}`;
-                  this.karnaughMap[i-1].secondCell.currentPatterns.borderTop = `3px solid ${this.patternsList[currentPatternIndex]}`;
-                  this.karnaughMap[i-1].secondCell.currentPatterns.borderRight = `3px solid ${this.patternsList[currentPatternIndex]}`;
-                  this.karnaughMap[i].secondCell.currentPatterns.borderLeft = `3px solid ${this.patternsList[currentPatternIndex]}`;
-                  break;
+        let adjacentPatternRight = this.findPatternByCellCoordinates(this.foundPatterns[i].cells[0].row, this.foundPatterns[i].cells[0].column+1)
+        if(nextIndex==0){
+          adjacentPatternRight = this.findPatternByCellCoordinates(this.foundPatterns[i].cells[0].row, 0)
+        }
+        
+        if(adjacentPatternRight?.type === 'column'){
+          this.foundPatterns[i].type = 'sqr';
+          this.foundPatterns[i].cells.push(adjacentPatternRight.cells[0]);
+          this.foundPatterns[i].cells.push(adjacentPatternRight.cells[1]);
+          this.foundPatterns.splice(nextIndex, 1);
+
+          // Delete the row type patterns that included the cells that are now part of the new square pattern
+          for (let j = 0; j < iterablePatterns.length; j++) {
+            if (iterablePatterns[j].type == 'row'){
+              for(let k = 0; k < 2; k++){
+                if(this.foundPatterns[i].cells.includes(iterablePatterns[j].cells[k])){
+                  this.foundPatterns.splice(j, 1);
                 }
               }
-            } else {
-              if(this.karnaughMap[i+1].firstCell.currentValue==filledCell && this.karnaughMap[i+1].secondCell.currentValue==emptyCell){
-                currentPatternIndex++;
-                // Dos Patrones: Horizontal arriba, primera columna
-                this.karnaughMap[i].firstCell.currentPatterns.borderRight = `3px solid ${this.patternsList[currentPatternIndex]}`;
-                this.karnaughMap[i+1].firstCell.currentPatterns.borderRight = `3px solid ${this.patternsList[currentPatternIndex]}`;
-                this.karnaughMap[i+1].firstCell.currentPatterns.borderBottom = `3px solid ${this.patternsList[currentPatternIndex]}`;
-                this.karnaughMap[i+1].firstCell.currentPatterns.borderLeft = `3px solid ${this.patternsList[currentPatternIndex]}`;
-                break;
-              } else if(this.karnaughMap[i+1].firstCell.currentValue==emptyCell && this.karnaughMap[i+1].secondCell.currentValue==filledCell){
-                currentPatternIndex++;
-                // Dos Patrones: Horizontal arriba, segunda columna
-                this.karnaughMap[i+1].secondCell.currentPatterns.borderLeft = `3px solid ${this.patternsList[currentPatternIndex]}`;
-                this.karnaughMap[i+1].secondCell.currentPatterns.borderBottom = `3px solid ${this.patternsList[currentPatternIndex]}`;
-                this.karnaughMap[i+1].secondCell.currentPatterns.borderRight = `3px solid ${this.patternsList[currentPatternIndex]}`;
-                this.karnaughMap[i].secondCell.currentPatterns.borderLeft = `3px solid ${this.patternsList[currentPatternIndex]}`;
-                break;
-              }
-            }
-          } else if(i==1){
-            if(this.karnaughMap[i-1].firstCell.currentValue==filledCell){
-              // Conjunto Vertical Primera Columna
-              this.karnaughMap[i-1].firstCell.currentPatterns.borderTop = `3px solid ${this.patternsList[currentPatternIndex]}`;
-              this.karnaughMap[i-1].firstCell.currentPatterns.borderRight = `3px solid ${this.patternsList[currentPatternIndex]}`;
-  
-              this.karnaughMap[i].firstCell.currentPatterns.borderBottom = `3px solid ${this.patternsList[currentPatternIndex]}`;
-              this.karnaughMap[i].firstCell.currentPatterns.borderRight = `3px solid ${this.patternsList[currentPatternIndex]}`;
-            } else {
-              // Bloque Solo Fila Abajo
-              this.karnaughMap[i].firstCell.currentPatterns.borderBottom = `3px solid ${this.patternsList[currentPatternIndex]}`;
-              this.karnaughMap[i].firstCell.currentPatterns.borderRight = `3px solid ${this.patternsList[currentPatternIndex]}`;
-              this.karnaughMap[i].firstCell.currentPatterns.borderTop = `3px solid ${this.patternsList[currentPatternIndex]}`;
-
-              if(this.karnaughMap[i-1].secondCell.currentValue==filledCell){
-                // Dos patrones: Bloques solos Diagonal Abajo Izquierda Arriba Derecha
-                currentPatternIndex++;
-                this.karnaughMap[i-1].secondCell.currentPatterns.borderLeft = `3px solid ${this.patternsList[currentPatternIndex]}`;
-                this.karnaughMap[i-1].secondCell.currentPatterns.borderTop = `3px solid ${this.patternsList[currentPatternIndex]}`;
-                this.karnaughMap[i-1].secondCell.currentPatterns.borderRight = `3px solid ${this.patternsList[currentPatternIndex]}`;
-                this.karnaughMap[i-1].secondCell.currentPatterns.borderBottom = `3px solid ${this.patternsList[currentPatternIndex]}`;
-                break;
-              }
-            }
-          } else {
-            if(this.karnaughMap[i+1].firstCell.currentValue==emptyCell){
-              // Bloque Solo Fila Arriba
-              this.karnaughMap[i].firstCell.currentPatterns.borderTop = `3px solid ${this.patternsList[currentPatternIndex]}`;
-              this.karnaughMap[i].firstCell.currentPatterns.borderRight = `3px solid ${this.patternsList[currentPatternIndex]}`;
-              this.karnaughMap[i].firstCell.currentPatterns.borderBottom = `3px solid ${this.patternsList[currentPatternIndex]}`;
-
-              if(this.karnaughMap[i+1].secondCell.currentValue==filledCell){
-                // Dos patrones: Bloques solos Diagonal Arriba Izquierda Abajo Derecha
-                currentPatternIndex++;
-                this.karnaughMap[i+1].secondCell.currentPatterns.borderLeft = `3px solid ${this.patternsList[currentPatternIndex]}`;
-                this.karnaughMap[i+1].secondCell.currentPatterns.borderTop = `3px solid ${this.patternsList[currentPatternIndex]}`;
-                this.karnaughMap[i+1].secondCell.currentPatterns.borderRight = `3px solid ${this.patternsList[currentPatternIndex]}`;
-                this.karnaughMap[i+1].secondCell.currentPatterns.borderBottom = `3px solid ${this.patternsList[currentPatternIndex]}`;
-                break;
-              }
-            }
-          }
-        } else if (this.karnaughMap[i].secondCell.currentValue==filledCell){
-          this.karnaughMap[i].secondCell.currentPatterns.borderRight = `3px solid ${this.patternsList[currentPatternIndex]}`;
-
-          if(i==1){
-            if(this.karnaughMap[i-1].secondCell.currentValue==filledCell){
-              // Conjunto Vertical Segunda Columna
-              this.karnaughMap[i-1].secondCell.currentPatterns.borderTop = `3px solid ${this.patternsList[currentPatternIndex]}`;
-              this.karnaughMap[i-1].secondCell.currentPatterns.borderLeft = `3px solid ${this.patternsList[currentPatternIndex]}`;
-
-              this.karnaughMap[i].secondCell.currentPatterns.borderBottom = `3px solid ${this.patternsList[currentPatternIndex]}`;
-              this.karnaughMap[i].secondCell.currentPatterns.borderLeft = `3px solid ${this.patternsList[currentPatternIndex]}`;
-              
-            } else {
-              // Bloque Solo Abajo Derecha
-              this.karnaughMap[i].secondCell.currentPatterns.borderBottom = `3px solid ${this.patternsList[currentPatternIndex]}`;
-              this.karnaughMap[i].secondCell.currentPatterns.borderLeft = `3px solid ${this.patternsList[currentPatternIndex]}`;
-              this.karnaughMap[i].secondCell.currentPatterns.borderTop = `3px solid ${this.patternsList[currentPatternIndex]}`;
-            }
-          } else {
-            if(this.karnaughMap[i+1].secondCell.currentValue==emptyCell){
-              // Bloque Solo Arriba Derecha
-              this.karnaughMap[i].secondCell.currentPatterns.borderTop = `3px solid ${this.patternsList[currentPatternIndex]}`;
-              this.karnaughMap[i].secondCell.currentPatterns.borderLeft = `3px solid ${this.patternsList[currentPatternIndex]}`;
-              this.karnaughMap[i].secondCell.currentPatterns.borderBottom = `3px solid ${this.patternsList[currentPatternIndex]}`;
             }
           }
         }
       }
     }
+
+    // Find the cells that have value 1 and are not part of any pattern
+    for(let i=0; i<karnaughArray.length; i++){
+      for(let j=0; j<karnaughArray[i].length; j++){
+        if(karnaughArray[i][j].value == filledCell){
+          let found = false;
+          for(let k=0; k<this.foundPatterns.length; k++){
+            if(this.foundPatterns[k].cells.includes(karnaughArray[i][j])){
+              found = true;
+              break;
+            }
+          }
+          if(!found){
+            this.foundPatterns.push({type: 'single', cells: [karnaughArray[i][j]]});
+          }
+        }
+      }
+    }
+
+    this.drawFoundPatternsIntoKarnaughMap();
   }
 
-  public solveKarNaughMapPOS(): void {
+  public karnaughRecursiveSolver(karnaughArray: any[], filledCell: number, currentPatternIndex: number): void {
+
+    // Caso base
+    if (karnaughArray.length === 1 && karnaughArray[0].length === 1) {
+      return;
+    }
+
+    // Dividir a la mitad en columnas
+    let midCol = Math.floor(karnaughArray[0].length / 2);
+    if(midCol!=0){
+      let leftHalf = [];
+      let rightHalf = [];
+  
+      for (let i = 0; i < karnaughArray.length; i++) {
+        leftHalf.push(karnaughArray[i].slice(0, midCol));
+        rightHalf.push(karnaughArray[i].slice(midCol));
+      }
+  
+      // Recursively solve each half
+      this.karnaughRecursiveSolver(leftHalf, filledCell, currentPatternIndex);
+      this.karnaughRecursiveSolver(rightHalf, filledCell, currentPatternIndex);
+
+    } else {
+      let valueCounter = 0;
+      for(let i=0; i<karnaughArray.length; i++){
+        if(karnaughArray[i][0].value==filledCell){
+          valueCounter++;
+        }
+      }
+
+      if(valueCounter!=karnaughArray.length){
+        return;
+      }
+
+      if(valueCounter==karnaughArray.length){
+        currentPatternIndex++;
+        this.foundPatterns.push({
+          'type': 'column',
+          'cells': [
+            karnaughArray[0][0],
+            karnaughArray[1][0]
+          ],
+          'state': 'closed'
+        });
+        return;
+      }
+    }
+
+    // Dividir a la mitad en filas
+    let midRow = Math.floor(karnaughArray.length / 2);
+    if(midRow!=0){
+      let topHalf = karnaughArray.slice(0, midRow);
+      let bottomHalf = karnaughArray.slice(midRow);
+  
+      // Recursively solve each half
+      this.karnaughRecursiveSolver(topHalf, filledCell, currentPatternIndex);
+      this.karnaughRecursiveSolver(bottomHalf, filledCell, currentPatternIndex);
+    } else {
+      let valueCounter = 0;
+      for(let i=0; i<karnaughArray[0].length; i++){
+        if(karnaughArray[0][i].value==filledCell){
+          valueCounter++;
+        }
+      }
+
+      if(valueCounter!=karnaughArray[0].length){
+        return;
+      }
+
+      if(valueCounter==karnaughArray[0].length){
+        currentPatternIndex++;
+        this.foundPatterns.push({
+          'type': 'row',
+          'cells': [
+            karnaughArray[0][0],
+            karnaughArray[0][1]
+          ],
+          'state': 'closed'
+        });
+        return;
+      }
+    }
+  }
+
+  public transformKarnaughMapInto2DArray(): any[] {
+    let karnaughArray: any[] = [];
+
+    if (this.variablesCount === 2) {
+      //Transform karnaughMap into a 2D array
+      for (let i = 0; i < 2; i++) {
+        karnaughArray.push([]);
+        for (let j = 0; j < 2; j++) {
+          if(j==0){
+            karnaughArray[i].push({
+              'value': this.karnaughMap[i].firstCell.currentValue,
+              'row': i,
+              'column': j
+            });
+          } else {
+            karnaughArray[i].push({
+              'value': this.karnaughMap[i].secondCell.currentValue,
+              'row': i,
+              'column': j
+            });
+          }
+        }
+      }
+    } else if (this.variablesCount === 3) {
+      //Transform karnaughMap into a 2D array
+      for (let i = 0; i < 2; i++) {
+        karnaughArray.push([]);
+        for (let j = 0; j < 4; j++) {
+          if(j==0){
+            karnaughArray[i].push({
+              'value': this.karnaughMap[i].firstCell.currentValue,
+              'row': i,
+              'column': j
+            });
+          } else if(j==1){
+            karnaughArray[i].push({
+              'value': this.karnaughMap[i].secondCell.currentValue,
+              'row': i,
+              'column': j
+            });
+          } else if(j==2){
+            karnaughArray[i].push({
+              'value': this.karnaughMap[i].thirdCell.currentValue,
+              'row': i,
+              'column': j
+            });
+          } else if(j==3){
+            karnaughArray[i].push({
+              'value': this.karnaughMap[i].fourthCell.currentValue,
+              'row': i,
+              'column': j
+            });
+          }
+        }
+      }
+    }
+
+    console.log(karnaughArray);
+    return karnaughArray;
+  }
+
+  public drawFoundPatternsIntoKarnaughMap(): void {
+    for (let i = 0; i < this.foundPatterns.length; i++) {
+      console.log(this.foundPatterns[i]);
+
+      if (this.foundPatterns[i].type === 'column') {
+
+        let selectedCell = 'firstCell'
+        switch(this.foundPatterns[i].cells[0].column){
+          case 1:
+            selectedCell = 'secondCell';
+            break;
+          case 2:
+            selectedCell = 'thirdCell';
+            break;
+          case 3:
+            selectedCell = 'fourthCell';
+            break;
+          default:
+            selectedCell = 'firstCell';
+            break;
+        }
+
+        this.karnaughMap[this.foundPatterns[i].cells[0].row][selectedCell].currentPatterns.borderTop = `3px solid ${this.colorsList[i]}`;
+        this.karnaughMap[this.foundPatterns[i].cells[0].row][selectedCell].currentPatterns.borderRight = `3px solid ${this.colorsList[i]}`;
+        this.karnaughMap[this.foundPatterns[i].cells[0].row][selectedCell].currentPatterns.borderLeft = `3px solid ${this.colorsList[i]}`;
+
+        this.karnaughMap[this.foundPatterns[i].cells[1].row][selectedCell].currentPatterns.borderBottom = `3px solid ${this.colorsList[i]}`;
+        this.karnaughMap[this.foundPatterns[i].cells[1].row][selectedCell].currentPatterns.borderRight = `3px solid ${this.colorsList[i]}`;
+        this.karnaughMap[this.foundPatterns[i].cells[1].row][selectedCell].currentPatterns.borderLeft = `3px solid ${this.colorsList[i]}`;
+      
+      } else if (this.foundPatterns[i].type === 'row'){
+
+        let selectedCell = 'firstCell'
+        switch(this.foundPatterns[i].cells[0].column){
+          case 1:
+            selectedCell = 'secondCell';
+            break;
+          case 2:
+            selectedCell = 'thirdCell';
+            break;
+          case 3:
+            selectedCell = 'fourthCell';
+            break;
+          default:
+            selectedCell = 'firstCell';
+            break;
+        }
+
+        this.karnaughMap[this.foundPatterns[i].cells[0].row][selectedCell].currentPatterns.borderTop = `3px solid ${this.colorsList[i]}`;
+        this.karnaughMap[this.foundPatterns[i].cells[0].row][selectedCell].currentPatterns.borderBottom = `3px solid ${this.colorsList[i]}`;
+        this.karnaughMap[this.foundPatterns[i].cells[0].row][selectedCell].currentPatterns.borderLeft = `3px solid ${this.colorsList[i]}`;
+
+        switch(this.foundPatterns[i].cells[1].column){
+          case 1:
+            selectedCell = 'secondCell';
+            break;
+          case 2:
+            selectedCell = 'thirdCell';
+            break;
+          case 3:
+            selectedCell = 'fourthCell';
+            break;
+          default:
+            selectedCell = 'firstCell';
+            break;
+        }
+
+        this.karnaughMap[this.foundPatterns[i].cells[1].row][selectedCell].currentPatterns.borderTop = `3px solid ${this.colorsList[i]}`;
+        this.karnaughMap[this.foundPatterns[i].cells[1].row][selectedCell].currentPatterns.borderBottom = `3px solid ${this.colorsList[i]}`;
+        this.karnaughMap[this.foundPatterns[i].cells[1].row][selectedCell].currentPatterns.borderRight = `3px solid ${this.colorsList[i]}`;
+
+      } else if (this.foundPatterns[i].type=="sqr"){
+
+        let selectedCell = 'firstCell'
+        switch(this.foundPatterns[i].cells[0].column){
+          case 1:
+            selectedCell = 'secondCell';
+            break;
+          case 2:
+            selectedCell = 'thirdCell';
+            break;
+          case 3:
+            selectedCell = 'fourthCell';
+            break;
+          default:
+            selectedCell = 'firstCell';
+            break;
+        }
+
+        this.karnaughMap[this.foundPatterns[i].cells[0].row][selectedCell].currentPatterns.borderTop = `3px solid ${this.colorsList[i]}`;
+        this.karnaughMap[this.foundPatterns[i].cells[0].row][selectedCell].currentPatterns.borderLeft = `3px solid ${this.colorsList[i]}`;
+
+        this.karnaughMap[this.foundPatterns[i].cells[1].row][selectedCell].currentPatterns.borderBottom = `3px solid ${this.colorsList[i]}`;
+        this.karnaughMap[this.foundPatterns[i].cells[1].row][selectedCell].currentPatterns.borderLeft = `3px solid ${this.colorsList[i]}`;
+
+        switch(this.foundPatterns[i].cells[2].column){
+          case 1:
+            selectedCell = 'secondCell';
+            break;
+          case 2:
+            selectedCell = 'thirdCell';
+            break;
+          case 3:
+            selectedCell = 'fourthCell';
+            break;
+          default:
+            selectedCell = 'firstCell';
+            break;
+        }
+
+        this.karnaughMap[this.foundPatterns[i].cells[2].row][selectedCell].currentPatterns.borderTop = `3px solid ${this.colorsList[i]}`;
+        this.karnaughMap[this.foundPatterns[i].cells[2].row][selectedCell].currentPatterns.borderRight = `3px solid ${this.colorsList[i]}`;
+
+        this.karnaughMap[this.foundPatterns[i].cells[3].row][selectedCell].currentPatterns.borderBottom = `3px solid ${this.colorsList[i]}`;
+        this.karnaughMap[this.foundPatterns[i].cells[3].row][selectedCell].currentPatterns.borderRight = `3px solid ${this.colorsList[i]}`;
+      
+      } else if (this.foundPatterns[i].type=="single"){
+        let selectedCell = 'firstCell'
+        switch(this.foundPatterns[i].cells[0].column){
+          case 1:
+            selectedCell = 'secondCell';
+            break;
+          case 2:
+            selectedCell = 'thirdCell';
+            break;
+          case 3:
+            selectedCell = 'fourthCell';
+            break;
+          default:
+            selectedCell = 'firstCell';
+            break;
+        }
+
+        this.karnaughMap[this.foundPatterns[i].cells[0].row][selectedCell].currentPatterns.borderTop = `3px solid ${this.colorsList[i]}`;
+        this.karnaughMap[this.foundPatterns[i].cells[0].row][selectedCell].currentPatterns.borderBottom = `3px solid ${this.colorsList[i]}`;
+        this.karnaughMap[this.foundPatterns[i].cells[0].row][selectedCell].currentPatterns.borderLeft = `3px solid ${this.colorsList[i]}`;
+        this.karnaughMap[this.foundPatterns[i].cells[0].row][selectedCell].currentPatterns.borderRight = `3px solid ${this.colorsList[i]}`;
+      }
+    }
+  }
+
+  public findPatternByCellCoordinates(row: number, column: number): any {
+    for (let i = 0; i < this.foundPatterns.length; i++) {
+      if (this.foundPatterns[i].cells[0].row === row && this.foundPatterns[i].cells[0].column === column) {
+        return this.foundPatterns[i];
+      }
+    }
   }
 
   public cleanPatterns(): void {
