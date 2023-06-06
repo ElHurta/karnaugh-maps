@@ -153,6 +153,7 @@ export class TruthTableComponent {
 
   public onToggleResult(): void {
     this.updateKarnaugMap();
+    this.solveKarNaughMap();
   }
 
   public updateKarnaugMap(): void {

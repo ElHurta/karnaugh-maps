@@ -29,11 +29,8 @@
                     id="solution-method"
                     [options]="solutionMethods"
                     [(ngModel)]="selectedSolutionMethod"
+                    (onChange)="solveKarNaughMap();"
                 ></p-dropdown>
-            </div>
-
-            <div class="flex flex-column">
-                <button pButton pRipple label="Solucionar" (click)="solveKarNaughMap()"></button>
             </div>
         </div>
     
